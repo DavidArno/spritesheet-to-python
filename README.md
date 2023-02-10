@@ -48,4 +48,4 @@ X.XX.X.X.hhh.www.v.b.c.X.X.XX.X
 `v` - vertical blank line control. If a non-black pixel, then a blank (all black) line is expected between each row of sprites
 `b` - horizontal blank line control. If a non-black pixel, then a blank (all black) line is expected between each sprite within a row
 
-`c` - control pixel colour. If black, then there is no specific colour specified for control pixels. If not black, then all control pixels must be of that colour. If `hhh` is black and therefore the sprites are of variable heights, this colour must be specified and that colour must only be used for control pixels to avoid confusing a pixel within a sprite with a control pixel.
+`c` - strict mode pixel. If black, then there is no specific colour specified for control pixels and blank lines between sprites and rows - if enabled - are simply ignored. If not black, then all control pixels must be of this colour and all blank lines must contain just black pixels. The utility will report an error if this isn't the case. This adds an extra check that the utility is correctly processing the spritesheet.
