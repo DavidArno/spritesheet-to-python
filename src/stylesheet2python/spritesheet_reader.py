@@ -1,18 +1,20 @@
 from itertools import islice
-from PIL import Image  # type: ignore
+from PIL import Image  # type: ignore#
 from dataclasses import dataclass
-from typing import Generator, NamedTuple
+from typing import Generator, NamedTuple, cast
 from enum import Enum
 
 RGB = NamedTuple('RGB', [('r', int), ('g', int), ('b', int)])
 
 _BLACK: RGB = RGB(0, 0, 0)
 
+
 class InfoLineParseResult(Enum):
     START_PATTERN_NOT_FOUND = 1
     EXPECTED_BLACK_UPTO_STOP_PATTERN = 2
     STOP_PATTERN_NOT_FOUND = 3
     IMAGE_FILE_TOO_SMALL = 4
+
 
 @dataclass
 class SpriteSheetConfiguration:
@@ -23,7 +25,21 @@ class SpriteSheetConfiguration:
     strict_mode: bool
     control_pixel_colour: RGB|None
 
+class ImageIsNotRgbError(Exception):
+    "Raised when a non-rgb format image is used to initialise a SpriteSheet"
+    pass
+
 class SpriteSheet:
+    def __init__(self, image:Image) -> None:
+        if (image.mode, image.format) != ("RGB", None):
+            raise ImageIsNotRgbError()
+
+        if not isinstance(raw_config := self._try_parse_info_line(image), SpriteSheetConfiguration):
+            raise Exception()
+
+        #config = cast(SpriteSheetConfiguration, raw_config)
+
+
 
     def _try_parse_info_line(self, image: Image) -> SpriteSheetConfiguration|InfoLineParseResult:
         width, _ = image.size
@@ -47,8 +63,8 @@ class SpriteSheet:
         if not found:
             return InfoLineParseResult.STOP_PATTERN_NOT_FOUND
 
-        if strict and not self._all_black_between_options_and_stop(image, x, y, stop_y):
-            return InfoLineParseResult.EXPECTED_BLACK_UPTO_STOP_PATTERN
+#        if strict and not self._all_black_between_options_and_stop(image, x, y, stop_y):
+#            return InfoLineParseResult.EXPECTED_BLACK_UPTO_STOP_PATTERN
 
         return SpriteSheetConfiguration(
             sprite_height=height,

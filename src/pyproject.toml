@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stylesheet2python"
+version = "0.0.1"
+dependencies = [
+    "Pillow >= 9.4"
+]
+
