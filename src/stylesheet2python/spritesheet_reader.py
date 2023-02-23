@@ -37,28 +37,31 @@ class SpriteSheet:
         if not isinstance(raw_config := self._try_parse_info_line(image), SpriteSheetConfiguration):
             raise Exception()
 
-        #config = cast(SpriteSheetConfiguration, raw_config)
+        self._configuration = cast(SpriteSheetConfiguration, raw_config)
 
 
+    @property
+    def configuration(self) -> SpriteSheetConfiguration:
+        return self._configuration
 
     def _try_parse_info_line(self, image: Image) -> SpriteSheetConfiguration|InfoLineParseResult:
-        width, _ = image.size
+        image_width, _ = image.size
 
-        if width < 8:
+        if image_width < 8:
             return InfoLineParseResult.IMAGE_FILE_TOO_SMALL
 
-        if not self._start_pattern_found(image, width):
+        if not self._start_pattern_found(image, image_width):
             return InfoLineParseResult.START_PATTERN_NOT_FOUND
 
         height = self._get_width_or_height(image, 9)
-        width_x = 10 + height if isinstance(height, int) else 1
+        width_x = 10 + (height if isinstance(height, int) else 1)
         width = self._get_width_or_height(image, width_x)
-        options_x = 12 + width if isinstance(width, int) else 1
+        options_x = width_x + 1 + (width if isinstance(width, int) else 1)
         sprite_blanks, row_blanks, strict, control_colour = self._get_options(image, options_x)
 
-        x, y = self._normalise_x_y(options_x + 6, 0, width)
+        x, y = self._normalise_x_y(options_x + 5, 0, image_width)
 
-        found, stop_y = self._stop_pattern_found(image, width, x, y)
+        found, stop_y = self._stop_pattern_found(image, image_width, x, y)
 
         if not found:
             return InfoLineParseResult.STOP_PATTERN_NOT_FOUND
@@ -78,7 +81,7 @@ class SpriteSheet:
     def _start_pattern_found(self, image: Image, width: int) -> bool:
         return self._start_or_stop_pattern_found(image, is_start=True, width=width, y=0)
 
-    def _stop_pattern_found(self, image: Image, width: int, x:int, y:int) -> tuple[bool, int]:
+    def _stop_pattern_found(self, image: Image, width: int, x: int, y: int) -> tuple[bool, int]:
         stop_y = y if width - x > 8 else y + 1
         return self._start_or_stop_pattern_found(image, is_start=False, width=width, y=stop_y), stop_y
 
@@ -112,6 +115,8 @@ class SpriteSheet:
             if pixel == _BLACK:
                 break
 
+            count += 1
+
         return None if count == 0 else count
 
     def _get_options(self, image: Image, start_x: int) -> tuple[bool, bool, bool, RGB|None]:
@@ -123,7 +128,7 @@ class SpriteSheet:
             strict_rgb if strict else None
         )
 
-    def _image_as_rgb_stream(self, image, start_x: int, start_y: int) -> Generator[RGB, None, None]:
+    def _image_as_rgb_stream(self, image: Image, start_x: int, start_y: int) -> Generator[RGB, None, None]:
         width, height = image.size
         x, y = self._normalise_x_y(start_x, start_y, width)
 
@@ -136,9 +141,10 @@ class SpriteSheet:
                 return
 
             yield self._get_pixel_rgb(image, x, y)
+            x += 1
 
     def _get_pixel_rgb(self, image: Image, x: int, y: int) -> RGB:
-        return cast(RGB, image.get_pixel((x, y)))  # type: ignore
+        return cast(RGB, image.getpixel((x, y)))  # type: ignore
 
     def _normalise_x_y(this, x: int, y: int, width: int) -> tuple[int, int]:
         while x >= width:
