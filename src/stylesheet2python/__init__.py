@@ -1,1 +1,1 @@
-from .spritesheet_reader import RGB, SpriteSheet, SpriteSheetConfiguration
+from .spritesheet_reader import RGB, SpriteSheet, SpriteSheetConfiguration, InfoLineParseResult

@@ -29,13 +29,17 @@ class ImageIsNotRgbError(Exception):
     "Raised when a non-rgb format image is used to initialise a SpriteSheet"
     pass
 
+class InfoLineParseError(Exception):
+    "Raised when a non-rgb format image is used to initialise a SpriteSheet"
+    pass
+
 class SpriteSheet:
     def __init__(self, image:Image) -> None:
         if (image.mode, image.format) != ("RGB", None):
             raise ImageIsNotRgbError()
 
         if not isinstance(raw_config := self._try_parse_info_line(image), SpriteSheetConfiguration):
-            raise Exception()
+            raise InfoLineParseError(raw_config)
 
         self._configuration = cast(SpriteSheetConfiguration, raw_config)
 
@@ -45,7 +49,7 @@ class SpriteSheet:
         return self._configuration
 
     def _try_parse_info_line(self, image: Image) -> SpriteSheetConfiguration|InfoLineParseResult:
-        image_width, _ = image.size
+        image_width, image_height = image.size
 
         if image_width < 8:
             return InfoLineParseResult.IMAGE_FILE_TOO_SMALL
@@ -61,7 +65,7 @@ class SpriteSheet:
 
         x, y = self._normalise_x_y(options_x + 5, 0, image_width)
 
-        found, stop_y = self._stop_pattern_found(image, image_width, x, y)
+        found, stop_y = self._stop_pattern_found(image, image_width, image_height, x, y)
 
         if not found:
             return InfoLineParseResult.STOP_PATTERN_NOT_FOUND
@@ -81,8 +85,11 @@ class SpriteSheet:
     def _start_pattern_found(self, image: Image, width: int) -> bool:
         return self._start_or_stop_pattern_found(image, is_start=True, width=width, y=0)
 
-    def _stop_pattern_found(self, image: Image, width: int, x: int, y: int) -> tuple[bool, int]:
+    def _stop_pattern_found(self, image: Image, width: int, height: int, x: int, y: int) -> tuple[bool, int]:
         stop_y = y if width - x > 8 else y + 1
+        if stop_y >= height:
+            return False, 0
+
         return self._start_or_stop_pattern_found(image, is_start=False, width=width, y=stop_y), stop_y
 
     def _start_or_stop_pattern_found(
