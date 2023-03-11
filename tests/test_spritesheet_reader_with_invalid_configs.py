@@ -61,6 +61,13 @@ def generate_stop_pattern_error_data() -> tuple[list[tuple[Image.Image, bool]], 
 IMAGES_AND_VALID_STARTS, START_NAMES = generate_start_pattern_error_data()
 IMAGES_AND_VALID_STOPS, STOPS_NAMES = generate_stop_pattern_error_data()
 
+def test_image_too_small():
+    image = create_image_from_x_pattern(["x_xx_x_", "       ", "x_x_xx_"])
+    try:
+        _ = SpriteSheet(image)
+    except InfoLineParseError as e:
+        assert e.args[0] == InfoLineParseResult.IMAGE_FILE_TOO_SMALL
+
 @pytest.mark.parametrize(("rgb_image", "valid"), IMAGES_AND_VALID_STARTS, ids=START_NAMES)
 def test_start_pattern(rgb_image, valid):
     try:
